@@ -1,3 +1,0 @@
-# periodically do this to get changes Bertel makes in the upstream repo
-git fetch upstream
-git merge upstream/main main 
