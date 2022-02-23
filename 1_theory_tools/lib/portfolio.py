@@ -49,7 +49,7 @@ class portfolio():
             self.x,self.w=intpy.quad_xw(m,0, 1)
         elif integration_method=="monecarlo":
             rng = np.random.default_rng()
-            self.x =np.random.rand(n,m)
+            self.x =np.random.rand(self.n,m)
             self.w = 1/m
 
         self.m = m      # number of quadrature nodes
