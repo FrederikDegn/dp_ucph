@@ -53,15 +53,16 @@ def solve_deaton_infty(par):
         interp = interpolate.interp1d(par.grid_W,V0, bounds_error=False, fill_value = "extrapolate") #Use this instead of np.interp, because it can extrapolate outside grid
         
         for iw,w in enumerate(par.grid_W):
-            #fill in
+            c = grid_C*w
+            w_c = par.R*(w - c)
+            EV_next = 0
+
+            for s in range(par.num_shocks):
+                EV_next += par.eps_w[s]*interp(w_c+par.eps[s])
             
-            
-            
-            
-            
-            
-            
-            
+            EV_guess = util(c,par)+par.beta*EV_next
+            sol.C[iw] = c[np.argmax(EV_guess)]
+            sol.V[iw] = np.amax(EV_guess)  
         
         sol.it += 1
         sol.delta = max(abs(sol.V - V0)) 
