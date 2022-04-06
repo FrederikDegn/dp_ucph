@@ -1,6 +1,7 @@
 #  MPEC class for structural estimation of discrete choice models.
 
 # load general packages
+from cmath import exp
 import numpy as np
 import Solve_NFXP as nfxp
 import model_zucher as zucher
@@ -86,33 +87,37 @@ def ll(theta,model,data,pnames,out=1):
     model.create_grid()
 
     # Value of options:
-    
+    value_replace = model.beta*ev -model.cost - model.RC
+    value_keep = model.beta*ev -model.cost
+    p = np.exp(value_keep) / (np.exp(value_keep) + np.exp(value_replace))
 
     # Evaluate the likelihood function 
-   
+    lik_pr = p[x]
     
     if out == 2:
         return model, lik_pr
 
-    log_lik = np.log(data.dk*lik_pr+(1-lik_pr)*data.dr)
+    log_lik = np.log(dk*lik_pr+(1-lik_pr)*dr)
     f = -np.mean(log_lik)
 
-
     # GRADIENT    
-    res = np.array(lik_pr-data.dk)
+    res = np.array(lik_pr-dk)
     g = np.zeros((2+model.n))
     g[0] = - np.mean(res)    # RC
-    g[1] =  np.mean(res*(model.dc[data.x]-model.dc[0]))  #c
-    g[2] = - (model.beta * np.mean(res*(data.xd[0,:]-1)) ) # ev(0) xd[:,0]-1
+    g[1] =  np.mean(res*(model.dc[x]-model.dc[0]))  #c
+    g[2] = - (model.beta * np.mean(res*(xd[0,:]-1)) ) # ev(0) xd[:,0]-1
     NT = res.size
-    g[3:] = -model.beta*np.sum(np.multiply(data.xd[1:,:],res),1)/NT
+    g[3:] = -model.beta*np.sum(np.multiply(xd[1:,:],res),1)/NT
 
     return f, -g
     
 def con_bellman(theta, model, data, pnames, out=1):
-    
+
     # Update parameters
     ev0 = theta[-model.n:]
+
+    ev1, pk, dev = model.bellman(ev0=ev0,output=3)
+
 
     if out ==2:
         return pk, dev
