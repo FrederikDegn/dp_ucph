@@ -5,8 +5,8 @@ import tools
 
 
 def EGM(sol,t,par):
-    #sol = EGM_loop(sol,t,par) 
-    sol = EGM_vec(sol,t,par) 
+    sol = EGM_loop(sol,t,par) 
+    #sol = EGM_vec(sol,t,par) 
     return sol
 
 def EGM_loop (sol,t,par):

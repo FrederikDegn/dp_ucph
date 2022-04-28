@@ -18,20 +18,28 @@ def maximum_likelihood(par, est_par, theta0, data,do_stderr):
 def log_likelihood(theta, est_par, par, data):
     
     #Update parameters
+    par = model.par
+    sol = model.sol
+
     par = updatepar(par,est_par,theta)
 
     # Solve the model
-    par = model.create_grids(par)
-    sol = model.solve(par)
+    model.create_grids()
+    model.solve()
 
     # Predict consumption
+    t = data.t
+    c_predict = tools.interp_linear_1d(sol.m[t,:],sol.c[t,:],data.m)
+    C_predict = c_predict*data.P        #Renormalize
 
     # Calculate errors
-
+    error = data.logC -np.log(C_predict)
 
     # Calculate log-likelihood
+    log_lik_vec = - 0.5*np.log(2*np.pi*par.sigma_eta**2)
+    log_lik_vec += (- (error**2)/(2*par.sigma_eta**2) )
     
-    return f
+    return np.mean(log_lik_vec) 
 
 def updatepar(par, parnames, parvals):
 
@@ -62,21 +70,33 @@ def method_simulated_moments(par,est_par,theta0,data):
 
 def sum_squared_diff_moments(theta,est_par,par,data):
 
+    par = model.par
     #Update parameters
     par = updatepar(par,est_par,theta)
 
     # Solve the model
-    par = model.create_grids(par)
-    sol = model.solve(par)
+    model.create_grids()
+    model.solve()
 
     # Simulate the momemnts
     moments = np.nan + np.zeros((data.moments.size,par.moments_numsim))
     for s in range(par.moments_numsim):
-        print(s)
+
+        # Simulate
+        model.simulate()
+
+        #Calculate moments
+        moments[:,s] = calc_moments(par,model.sim)
 
     # Mean of moments         
+    moments = np.mean(moments,1)
 
     # Objective function
+    if hasattr(par, 'weight_mat'):
+        weight_mat_inv = np.linalg.inv(par.weight_mat)  
+    else:
+        weight_mat_inv = np.eye(moments.size)   # The identity matrix and I^-1=I
     
+    diff = (moments-data.moments).reshape(moments.size,1)
 
-    return obj
+    return (diff.T@weight_mat_inv @diff).ravel()
